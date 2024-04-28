@@ -6,7 +6,7 @@ import java.util.*
 object Client {
     private val scanner = Scanner(System.`in`)
 
-    fun getAuthData(salt: ByteArray): ClientAuthData {
+    fun getAuthData(): ClientAuthData {
 //        println("username:")
 //        val username = scanner.nextLine().trim()
 //
@@ -15,7 +15,7 @@ object Client {
 
         val username = "teste"
         val password = "123123as"
-        val pbkdf2Token = password.deriveWithPbkdf2(salt)
+        val pbkdf2Token = password.deriveWithPbkdf2()
 
         return ClientAuthData(
             username = username,

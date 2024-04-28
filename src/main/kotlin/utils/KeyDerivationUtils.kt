@@ -5,20 +5,28 @@ import org.bouncycastle.crypto.fips.Scrypt
 import org.bouncycastle.crypto.fips.Scrypt.KDFFactory
 import org.bouncycastle.util.Strings
 import org.bouncycastle.util.encoders.Hex
+import java.io.File
 import java.security.SecureRandom
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
-fun getSalt(): ByteArray {
+private val saltFile = File("src/main/resources/salt.txt")
+private val salt: ByteArray by lazy { saltFile.getFirstLine().toByteArray() }
+
+fun generateAndWriteSalt() {
     val sr = SecureRandom.getInstance("SHA1PRNG")
+
     val saltBytes = ByteArray(16)
     sr.nextBytes(saltBytes)
 
-    return saltBytes
+    val salt = Hex.toHexString(saltBytes)
+
+    saltFile.removeAllLines()
+    saltFile.putLine(salt)
 }
 
 // PBDKF2
-fun String.deriveWithPbkdf2(salt: ByteArray): String {
+fun String.deriveWithPbkdf2(): String {
     val key = this.toCharArray()
 
     val keySpec = PBEKeySpec(key, salt, pbkdf2IterationCount, pbkdf2KeyLength)
@@ -31,7 +39,7 @@ fun String.deriveWithPbkdf2(salt: ByteArray): String {
 }
 
 // Scrypt
-fun String.deriveWithScrypt(salt: ByteArray): String {
+fun String.deriveWithScrypt(): String {
     val key = this.toCharArray()
 
     val params = Scrypt.ALGORITHM.using(

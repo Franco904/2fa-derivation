@@ -1,7 +1,7 @@
 import auth.Client
 import auth.Server
 import org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider
-import utils.getSalt
+import utils.generateAndWriteSalt
 import java.security.Security
 import java.util.*
 
@@ -11,6 +11,8 @@ import java.util.*
 fun main() {
     // Add BouncyCastle security provider so we can access its algorithms
     Security.addProvider(BouncyCastleFipsProvider())
+
+    generateAndWriteSalt()
 
     when (getAppMode()) {
         "1" -> executeCadastroUsuarioMode()
@@ -30,21 +32,16 @@ private fun getAppMode(): String {
 
 private fun executeCadastroUsuarioMode() {
     println("[ Cadastro de usuário ]\n")
-
-    // TODO: Persistir credenciais do cliente
 }
 
 private fun executeAutenticacaoMode() {
     println("[ Autenticação de usuário ]\n")
 
-    val salt = getSalt()
-    val clientAuthData = Client.getAuthData(salt = salt)
+    val clientAuthData = Client.getAuthData()
 
     println("Client password: ${clientAuthData.password}")
     println("Client auth token (PBKDF2): ${clientAuthData.pbKdf2Token}")
 
-    // TODO: Buscar token Scrypt do cliente persistido
-    // TODO: Comparar tokens e retornar o resultado da primeira autenticação
-    val scryptToken = Server.executeFirstClientAuth(clientAuthData, salt = salt)
+    val scryptToken = Server.executeFirstClientAuth(clientAuthData)
     println("Server auth token (Scrypt): $scryptToken")
 }
