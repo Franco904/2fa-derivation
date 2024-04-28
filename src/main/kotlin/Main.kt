@@ -15,8 +15,8 @@ fun main() {
     generateAndWriteSalt()
 
     when (getAppMode()) {
-        "1" -> executeCadastroUsuarioMode()
-        "2" -> executeAutenticacaoMode()
+        "1" -> executeUserSignUpMode()
+        "2" -> executeAuthMode()
     }
 }
 
@@ -30,11 +30,11 @@ private fun getAppMode(): String {
     return Scanner(System.`in`).nextLine().trim()
 }
 
-private fun executeCadastroUsuarioMode() {
+private fun executeUserSignUpMode() {
     println("[ Cadastro de usuário ]\n")
 }
 
-private fun executeAutenticacaoMode() {
+private fun executeAuthMode() {
     println("[ Autenticação de usuário ]\n")
 
     val clientAuthData = Client.getAuthData()
