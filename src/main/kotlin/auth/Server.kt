@@ -1,10 +1,10 @@
 package auth
 
-import java.util.*
+import utils.deriveWithScrypt
 
 object Server {
-    fun start2Fa() {
-        val scanner = Scanner(System.`in`)
-        scanner.nextLine()
-    }
+    fun executeFirstClientAuth(
+        clientAuthData: ClientAuthData,
+        salt: ByteArray,
+    ) = clientAuthData.pbKdf2Token.deriveWithScrypt(salt)
 }
