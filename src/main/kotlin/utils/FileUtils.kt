@@ -2,9 +2,15 @@ package utils
 
 import java.io.File
 
+fun File.createIfNotExists() {
+    if (!exists()) createNewFile()
+}
+
 fun File.getLine(text: String) = bufferedReader().readLines().find { text in it }
 
 fun File.getFirstLine() = bufferedReader().readLines().first()
+
+fun File.getFirstLineOrNull() = bufferedReader().readLines().firstOrNull()
 
 fun File.hasLine(text: String) = bufferedReader().readLines().any { text in it }
 
