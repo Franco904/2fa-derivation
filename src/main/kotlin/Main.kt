@@ -1,7 +1,10 @@
 import auth.Client
 import auth.Server
 import org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider
+import utils.decrypt
+import utils.encrypt
 import utils.generateAndWriteSalt
+import java.io.File
 import java.security.Security
 import java.util.*
 
@@ -14,10 +17,12 @@ fun main() {
 
     generateAndWriteSalt()
 
+    executeAuthMode()
     when (getAppMode()) {
         "1" -> executeUserSignUpMode()
         "2" -> executeAuthMode()
     }
+
 //    deleteTextFiles()
 }
 
@@ -33,6 +38,13 @@ private fun getAppMode(): String {
 
 private fun executeUserSignUpMode() {
     println("[ Cadastro de usuário ]\n")
+
+    val clientAuthData = Client.getAuthData()
+
+    println("Client password to store: ${clientAuthData.password}")
+    println("Client auth token (PBKDF2): ${clientAuthData.pbKdf2Token}")
+
+    Server.signUpClient(clientAuthData)
 }
 
 private fun executeAuthMode() {
@@ -45,6 +57,13 @@ private fun executeAuthMode() {
 
     val scryptToken = Server.executeFirstClientAuth(clientAuthData)
     println("Server auth token (Scrypt): $scryptToken")
+
+    val encripted = scryptToken.encrypt()
+    println(encripted)
+    val decrypted = encripted.decrypt()
+    println(decrypted)
+}
+
 private fun deleteTextFiles() {
     val resourcesFolder = File("src/main/resources")
     resourcesFolder.listFiles()?.forEach { file -> file.delete() }

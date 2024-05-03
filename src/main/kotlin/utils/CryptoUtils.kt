@@ -44,7 +44,6 @@ fun String.encrypt(): String {
     val ivBytes = encripter.iv
     val ivHex = Hex.encodeHexString(ivBytes)
 
-    // TODO: Rever esse formato de retorno aqui!!
     return "$ivHex:$encryptedTextHex"
 }
 
