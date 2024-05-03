@@ -18,8 +18,6 @@ fun main() {
         "1" -> executeUserSignUpMode()
         "2" -> executeAuthMode()
     }
-
-//    deleteTextFiles()
 }
 
 private fun getAppMode(): String {
@@ -48,14 +46,9 @@ private fun executeAuthMode() {
 
     val clientAuthData = Client.getAuthData()
 
-    println("[Client] password: ${clientAuthData.password}")
+    println("[Client] password to verify: ${clientAuthData.password}")
     println("[Client] auth token (PBKDF2): ${clientAuthData.pbKdf2Token}")
 
     val isAuthenticated = Server.executeFirstClientAuth(clientAuthData)
     println("[Server] isAuthenticated: $isAuthenticated")
-}
-
-private fun deleteTextFiles() {
-    val resourcesFolder = File("src/main/resources")
-    resourcesFolder.listFiles()?.forEach { file -> file.delete() }
 }

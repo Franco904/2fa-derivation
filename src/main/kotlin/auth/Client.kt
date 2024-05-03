@@ -13,9 +13,6 @@ object Client {
         println("password:")
         val password = scanner.nextLine().trim()
 
-//        val username = "teste"
-//        val password = "123123as"
-
         val salt = getSaltForUser(username)
         val pbkdf2Token = password.deriveWithPbkdf2(salt.toByteArray())
 

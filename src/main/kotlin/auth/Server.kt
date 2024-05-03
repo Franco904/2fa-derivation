@@ -22,7 +22,7 @@ object Server {
 
         val scryptToken = clientAuthData.pbKdf2Token.deriveWithScrypt(salt.toByteArray())
 
-        val file = File("src/main/resources/registry.txt")
+        val file = File("src/main/resources/registry.txt").apply { createIfNotExists() }
         val scryptTokenStored = file.getLine(username)?.split("=")?.get(1)
         val decryptedToken = scryptTokenStored?.decrypt()
 
