@@ -18,6 +18,7 @@ fun main() {
         "1" -> executeUserSignUpMode()
         "2" -> executeAuthMode()
     }
+//    deleteTextFiles()
 }
 
 private fun getAppMode(): String {
@@ -44,4 +45,7 @@ private fun executeAuthMode() {
 
     val scryptToken = Server.executeFirstClientAuth(clientAuthData)
     println("Server auth token (Scrypt): $scryptToken")
+private fun deleteTextFiles() {
+    val resourcesFolder = File("src/main/resources")
+    resourcesFolder.listFiles()?.forEach { file -> file.delete() }
 }

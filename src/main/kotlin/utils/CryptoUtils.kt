@@ -50,7 +50,7 @@ fun String.encrypt(): String {
 
 fun String.decrypt(): String {
     val rawText = this.split(":")
-    val (ivHex, encryptedTextHex) = Pair(rawText[0], rawText[1])
+    val (ivHex, encryptedTextHex) = rawText[0] to rawText[1]
 
     val ivBytes = Hex.decodeHex(ivHex)
     val encryptedTextBytes = Hex.decodeHex(encryptedTextHex)

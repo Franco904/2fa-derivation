@@ -10,7 +10,7 @@ import java.security.SecureRandom
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
-private val saltFile = File("src/main/resources/salt.txt")
+private val saltFile = File("src/main/resources/salt.txt").apply { createIfNotExists() }
 private val salt: ByteArray by lazy { saltFile.getFirstLine().toByteArray() }
 
 fun generateAndWriteSalt() {
