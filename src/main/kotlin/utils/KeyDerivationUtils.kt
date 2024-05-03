@@ -10,26 +10,30 @@ import java.security.SecureRandom
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
-private val saltFile = File("src/main/resources/salt.txt").apply { createIfNotExists() }
-private val salt: ByteArray by lazy { saltFile.getFirstLine().toByteArray() }
+fun getSaltForUser(username: String): String {
+    val file = File("src/main/resources/users-salt.txt").apply { createIfNotExists() }
 
-fun generateAndWriteSalt() {
+    val saltFromFile = file.getLine(username)?.split("=")?.get(1)
+    val saltHex = saltFromFile ?: generateSaltForUser(username).also { salt -> file.putLine("$username=$salt") }
+
+    return saltHex
+}
+
+private fun generateSaltForUser(username: String): String {
     val sr = SecureRandom.getInstance("SHA1PRNG")
 
     val saltBytes = ByteArray(16)
     sr.nextBytes(saltBytes)
 
     val salt = Hex.toHexString(saltBytes)
-
-    saltFile.removeAllLines()
-    saltFile.putLine(salt)
+    return salt
 }
 
 // PBDKF2
-fun String.deriveWithPbkdf2(): String {
+fun String.deriveWithPbkdf2(salt: ByteArray): String {
     val key = this.toCharArray()
 
-    val keySpec = PBEKeySpec(key, salt, pbkdf2IterationCount, pbkdf2KeyLength)
+    val keySpec = PBEKeySpec(key, salt, PBKDF2_ITERATION_COUNT, PBKDF2_KEY_LENGTH)
 
     val pbKdf2 = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512", "BCFIPS")
 
@@ -39,14 +43,14 @@ fun String.deriveWithPbkdf2(): String {
 }
 
 // Scrypt
-fun String.deriveWithScrypt(): String {
+fun String.deriveWithScrypt(salt: ByteArray): String {
     val key = this.toCharArray()
 
     val params = Scrypt.ALGORITHM.using(
         salt,
-        scryptCostParameter,
-        scryptBlocksize,
-        scryptParallelizationParam,
+        SCRYPT_COST_PARAM,
+        SCRYPT_BLOCKSIZE,
+        SCRYPT_PARALLELIZATION_PARAM,
         Strings.toUTF8ByteArray(key),
     )
 

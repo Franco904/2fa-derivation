@@ -3,7 +3,6 @@ import auth.Server
 import org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider
 import utils.decrypt
 import utils.encrypt
-import utils.generateAndWriteSalt
 import java.io.File
 import java.security.Security
 import java.util.*
@@ -15,9 +14,6 @@ fun main() {
     // Add BouncyCastle security provider so we can access its algorithms
     Security.addProvider(BouncyCastleFipsProvider())
 
-    generateAndWriteSalt()
-
-    executeAuthMode()
     when (getAppMode()) {
         "1" -> executeUserSignUpMode()
         "2" -> executeAuthMode()
@@ -41,8 +37,8 @@ private fun executeUserSignUpMode() {
 
     val clientAuthData = Client.getAuthData()
 
-    println("Client password to store: ${clientAuthData.password}")
-    println("Client auth token (PBKDF2): ${clientAuthData.pbKdf2Token}")
+    println("[Client] password to store: ${clientAuthData.password}")
+    println("[Client] auth token (PBKDF2): ${clientAuthData.pbKdf2Token}")
 
     Server.signUpClient(clientAuthData)
 }
@@ -52,16 +48,11 @@ private fun executeAuthMode() {
 
     val clientAuthData = Client.getAuthData()
 
-    println("Client password: ${clientAuthData.password}")
-    println("Client auth token (PBKDF2): ${clientAuthData.pbKdf2Token}")
+    println("[Client] password: ${clientAuthData.password}")
+    println("[Client] auth token (PBKDF2): ${clientAuthData.pbKdf2Token}")
 
-    val scryptToken = Server.executeFirstClientAuth(clientAuthData)
-    println("Server auth token (Scrypt): $scryptToken")
-
-    val encripted = scryptToken.encrypt()
-    println(encripted)
-    val decrypted = encripted.decrypt()
-    println(decrypted)
+    val isAuthenticated = Server.executeFirstClientAuth(clientAuthData)
+    println("[Server] isAuthenticated: $isAuthenticated")
 }
 
 private fun deleteTextFiles() {
