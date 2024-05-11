@@ -1,43 +1,77 @@
 package auth
 
-import org.apache.commons.codec.binary.Hex
+import com.google.zxing.common.BitMatrix
 import utils.*
 import java.io.File
 
 object Server {
-    fun signUpClient(clientAuthData: ClientAuthData) = with(clientAuthData) {
-        val file = File(resourcesFolder, "registry.txt").apply { createIfNotExists() }
-        if (file.hasLine(username)) throw Exception("Username already registered")
+    private var sessionKey = ""
 
-        val salt = getSaltForUser(username)
-        val scryptToken = pbKdf2Token.deriveWithScrypt(salt.toByteArray())
-        val scryptForKey = pbKdf2Token.deriveWithScrypt(salt.toByteArray(), keySize = 16) // AES KEY 128 bits
-        val scryptForIv = pbKdf2Token.deriveWithScrypt(salt.toByteArray(), keySize = 12) // GCM IV 96 bits
+    fun signUpClient(clientAuthData: ClientAuthData) {
+        val file = File(resourcesFolder, "registry.txt").apply { createIfNotExists() }
+        if (file.hasLine(clientAuthData.username)) throw Exception("Usuário já registrado.")
+
+        val salt = getSaltForUser(clientAuthData.username)
+        val scryptToken = clientAuthData.pbKdf2Token.deriveWithScrypt(salt.toByteArray())
+        val scryptForKey = clientAuthData.pbKdf2Token.deriveWithScrypt(salt.toByteArray(), keySize = 16) // AES KEY 128 bits
+        val scryptForIv = clientAuthData.pbKdf2Token.deriveWithScrypt(salt.toByteArray(), keySize = 12) // GCM IV 96 bits
 
         val secretKey = generateSecretKey(scryptForKey.toByteArray())
         val iv = generateIv(scryptForIv.toByteArray())
 
-        println("key encrypt: ${Hex.encodeHexString(secretKey.encoded)}")
-        println("iv encrypt: ${Hex.encodeHexString(iv.iv)}")
-
-        file.putLine("$username=${scryptToken.encrypt(secretKey, iv)}")
+        file.putLine("${clientAuthData.username}=${scryptToken.encrypt(secretKey, iv)}")
     }
 
-    fun executeFirstClientAuth(clientAuthData: ClientAuthData): Boolean = with(clientAuthData) {
+    fun validateUsernamePassword(clientAuthData: ClientAuthData): String {
         val file = File(resourcesFolder, "registry.txt").apply { createIfNotExists() }
-        val scryptTokenStored = file.getLine(username)?.split("=")?.get(1) ?: return false
+        val scryptTokenStored = file.getLine(clientAuthData.username)?.split("=")?.get(1) ?: throw Exception("Usuário ou senha incorretos.")
 
-        val salt = getSaltForUser(username)
-        val scryptToken = pbKdf2Token.deriveWithScrypt(salt.toByteArray())
-        val scryptForKey = pbKdf2Token.deriveWithScrypt(salt.toByteArray(), keySize = 16) // AES KEY 128 bits
-        val scryptForIv = pbKdf2Token.deriveWithScrypt(salt.toByteArray(), keySize = 12) // GCM IV 96 bits
+        val salt = getSaltForUser(clientAuthData.username)
+        val scryptToken = clientAuthData.pbKdf2Token.deriveWithScrypt(salt.toByteArray())
+        val scryptForKey = clientAuthData.pbKdf2Token.deriveWithScrypt(salt.toByteArray(), keySize = 16) // AES KEY 128 bits
+        val scryptForIv = clientAuthData.pbKdf2Token.deriveWithScrypt(salt.toByteArray(), keySize = 12) // GCM IV 96 bits
 
         val secretKey = generateSecretKey(scryptForKey.toByteArray())
         val iv = generateIv(scryptForIv.toByteArray())
 
-        println("key decrypt: ${Hex.encodeHexString(secretKey.encoded)}")
-        println("iv decrypt: ${Hex.encodeHexString(iv.iv)}")
+        val decryptedScryptToken = scryptTokenStored.decrypt(secretKey, iv)
 
-        scryptToken == scryptTokenStored.decrypt(secretKey, iv)
+        if (scryptToken != decryptedScryptToken) throw Exception("Usuário ou senha incorretos.")
+
+        return decryptedScryptToken
+    }
+
+    fun create2FACode(secret: String): Pair<String, BitMatrix?> {
+        val totpToken = generateTotp(secret)
+        val qrCodeMatrix = createQRCode(content = "https://large-type.com/#$totpToken")
+
+        return Pair(totpToken, qrCodeMatrix)
+    }
+
+    fun validate2FACode(clientTOTP: String, originalTOTP: String) {
+        if (clientTOTP != originalTOTP) throw Exception("Código 2FA incorreto.")
+    }
+
+    fun derivateTOTPtoSessionKey(totp: String, clientAuthData: ClientAuthData) {
+        val salt = getSaltForUser(clientAuthData.username)
+
+        val totpKey = totp.deriveWithPbkdf2(salt.toByteArray())
+        sessionKey = totpKey
+    }
+
+    fun receiveMessageAndReply(message: String, clientAuthData: ClientAuthData): String {
+        val salt = getSaltForUser(clientAuthData.username)
+
+        val scryptForIv = clientAuthData.pbKdf2Token.deriveWithScrypt(salt.toByteArray(), keySize = 12) // GCM IV 96 bits
+        val iv = generateIv(scryptForIv.toByteArray())
+
+        if (sessionKey == "") throw Exception("Chave de sessão indisponível.")
+        val secretKey = generateSecretKey(sessionKey.toByteArray())
+
+        val decryptedMessage = message.decrypt(secretKey, iv)
+        println("[ Servidor ] Recebeu a mensagem do cliente: $decryptedMessage")
+
+        val serverReply = "( OK ) Código da mensagem: ${message.hashCode()}"
+        return serverReply.encrypt(secretKey, iv)
     }
 }

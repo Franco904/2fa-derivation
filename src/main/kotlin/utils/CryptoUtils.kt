@@ -29,21 +29,9 @@ private fun getDecrypter(secretKey: SecretKey, iv: AlgorithmParameterSpec): Ciph
     }
 }
 
-//private fun getSecretKey(): SecretKey {
-//    val file = File("src/main/resources/secret_key.txt").apply { createIfNotExists() }
-//
-//    val keyHex = file.getFirstLineOrNull().let {
-//        it ?: generateSecretKey().also { key -> file.putLine(key) }
-//    }
-//
-//    return SecretKeySpec(keyHex.toByteArray(), ALGORITHM)
-//}
-
 fun generateSecretKey(keyBytes: ByteArray): SecretKey {
-//    val key = SecretKeySpec(tfaToken.toByteArray(), ALGORITHM)
-//    return KeyGenerator.getInstance(ALGORITHM, PROVIDER).generateKey()
-//    return Hex.encodeHexString(key.encoded)
     val keySpec = SecretKeySpec(keyBytes, ALGORITHM)
+
     return SecretKeyFactory.getInstance(ALGORITHM, PROVIDER).generateSecret(keySpec)
 }
 
@@ -53,10 +41,6 @@ fun String.encrypt(key: SecretKey, iv: AlgorithmParameterSpec): String {
     val encrypter = getEncrypter(key, iv)
     val encryptedTextBytes = encrypter.doFinal(this.toByteArray())
 
-//    val ivBytes = encripter.iv
-//    val ivHex = Hex.encodeHexString(ivBytes)
-
-//    return "$ivHex:$encryptedTextHex"
     return Hex.encodeHexString(encryptedTextBytes)
 }
 
@@ -68,11 +52,6 @@ fun String.decrypt(key: SecretKey, iv: AlgorithmParameterSpec): String {
     } catch (e: AEADBadTagException) {
         "IV não é o mesmo da cifragem".toByteArray()
     }
-//    val rawText = this.split(":")
-//    val (ivHex, encryptedTextHex) = rawText[0] to rawText[1]
-
-//    val ivBytes = Hex.decodeHex(ivHex)
-//    val encryptedTextBytes = Hex.decodeHex(encryptedTextHex)
 
     return String(decryptedTextBytes, Charsets.UTF_8)
 }

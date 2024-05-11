@@ -10,8 +10,16 @@ repositories {
 }
 
 dependencies {
+    // Security
     implementation("org.bouncycastle:bc-fips:1.0.2.5")
+
+    // Encoding
     implementation("commons-codec:commons-codec:1.16.1")
+
+    // TOTP
     implementation("de.taimos:totp:1.0")
+
+    // QR Code
     implementation("com.google.zxing:javase:3.5.3")
+    implementation("com.github.auties00:qr-terminal:2.1")
 }
