@@ -35,10 +35,14 @@ private fun executeUserSignUpMode() {
 
     val clientAuthData = Client.getAuthData()
 
-    println("[Client] password to store: ${clientAuthData.password}")
-    println("[Client] auth token (PBKDF2): ${clientAuthData.pbKdf2Token}")
+//    println("[Client] password to store: ${clientAuthData.password}")
+//    println("[Client] auth token (PBKDF2): ${clientAuthData.pbKdf2Token}")
 
-    Server.signUpClient(clientAuthData)
+    try {
+        Server.signUpClient(clientAuthData)
+    } catch (e: Exception) {
+        println(e.message)
+    }
 }
 
 private fun executeAuthMode() {
@@ -46,8 +50,8 @@ private fun executeAuthMode() {
 
     val clientAuthData = Client.getAuthData()
 
-    println("[Client] password to verify: ${clientAuthData.password}")
-    println("[Client] auth token (PBKDF2): ${clientAuthData.pbKdf2Token}")
+//    println("[Client] password to verify: ${clientAuthData.password}")
+//    println("[Client] auth token (PBKDF2): ${clientAuthData.pbKdf2Token}")
 
     val isAuthenticated = Server.executeFirstClientAuth(clientAuthData)
     println("[Server] isAuthenticated: $isAuthenticated")

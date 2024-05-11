@@ -1,10 +1,13 @@
 package utils
 
 import org.apache.commons.codec.binary.Hex
-import java.io.File
+import java.security.SecureRandom
+import java.security.spec.AlgorithmParameterSpec
+import javax.crypto.AEADBadTagException
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
+import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
@@ -14,48 +17,62 @@ private const val PADDING_SCHEME = "NoPadding"
 private const val TRANSFORMATION = "$ALGORITHM/$BLOCK_MODE/$PADDING_SCHEME"
 private const val PROVIDER = "BCFIPS"
 
-private val encripter = Cipher.getInstance(TRANSFORMATION, PROVIDER).apply {
-    init(Cipher.ENCRYPT_MODE, getSecretKey())
-}
-
-private fun getDecrypter(iv: ByteArray) = Cipher.getInstance(TRANSFORMATION, PROVIDER).apply {
-    init(Cipher.DECRYPT_MODE, getSecretKey(), IvParameterSpec(iv))
-}
-
-private fun getSecretKey(): SecretKey {
-    val file = File("src/main/resources/secret_key.txt").apply { createIfNotExists() }
-
-    val keyHex = file.getFirstLineOrNull().let {
-        it ?: generateSecretKey().also { key -> file.putLine(key) }
+private fun getEncrypter(secretKey: SecretKey, iv: AlgorithmParameterSpec): Cipher {
+    return Cipher.getInstance(TRANSFORMATION, PROVIDER).apply {
+        init(Cipher.ENCRYPT_MODE, secretKey, iv)
     }
-
-    return SecretKeySpec(keyHex.toByteArray(), ALGORITHM)
 }
 
-private fun generateSecretKey(): String {
-    val key = KeyGenerator.getInstance(ALGORITHM, PROVIDER).generateKey()
-    return Hex.encodeHexString(key.encoded)
+private fun getDecrypter(secretKey: SecretKey, iv: AlgorithmParameterSpec): Cipher {
+    return Cipher.getInstance(TRANSFORMATION, PROVIDER).apply {
+        init(Cipher.DECRYPT_MODE, secretKey, iv)
+    }
 }
 
-fun String.encrypt(): String {
-    val encryptedTextBytes = encripter.doFinal(this.toByteArray())
-    val encryptedTextHex = Hex.encodeHexString(encryptedTextBytes)
+//private fun getSecretKey(): SecretKey {
+//    val file = File("src/main/resources/secret_key.txt").apply { createIfNotExists() }
+//
+//    val keyHex = file.getFirstLineOrNull().let {
+//        it ?: generateSecretKey().also { key -> file.putLine(key) }
+//    }
+//
+//    return SecretKeySpec(keyHex.toByteArray(), ALGORITHM)
+//}
 
-    val ivBytes = encripter.iv
-    val ivHex = Hex.encodeHexString(ivBytes)
-
-    return "$ivHex:$encryptedTextHex"
+fun generateSecretKey(keyBytes: ByteArray): SecretKey {
+//    val key = SecretKeySpec(tfaToken.toByteArray(), ALGORITHM)
+//    return KeyGenerator.getInstance(ALGORITHM, PROVIDER).generateKey()
+//    return Hex.encodeHexString(key.encoded)
+    val keySpec = SecretKeySpec(keyBytes, ALGORITHM)
+    return SecretKeyFactory.getInstance(ALGORITHM, PROVIDER).generateSecret(keySpec)
 }
 
-fun String.decrypt(): String {
-    val rawText = this.split(":")
-    val (ivHex, encryptedTextHex) = rawText[0] to rawText[1]
+fun generateIv(ivBytes: ByteArray) = IvParameterSpec(ivBytes)
 
-    val ivBytes = Hex.decodeHex(ivHex)
-    val encryptedTextBytes = Hex.decodeHex(encryptedTextHex)
+fun String.encrypt(key: SecretKey, iv: AlgorithmParameterSpec): String {
+    val encrypter = getEncrypter(key, iv)
+    val encryptedTextBytes = encrypter.doFinal(this.toByteArray())
 
-    val decrypter = getDecrypter(ivBytes)
-    val decryptedTextBytes = decrypter.doFinal(encryptedTextBytes)
+//    val ivBytes = encripter.iv
+//    val ivHex = Hex.encodeHexString(ivBytes)
+
+//    return "$ivHex:$encryptedTextHex"
+    return Hex.encodeHexString(encryptedTextBytes)
+}
+
+fun String.decrypt(key: SecretKey, iv: AlgorithmParameterSpec): String {
+    val decrypter = getDecrypter(key, iv)
+
+    val decryptedTextBytes = try {
+        decrypter.doFinal(Hex.decodeHex(this))
+    } catch (e: AEADBadTagException) {
+        "IV não é o mesmo da cifragem".toByteArray()
+    }
+//    val rawText = this.split(":")
+//    val (ivHex, encryptedTextHex) = rawText[0] to rawText[1]
+
+//    val ivBytes = Hex.decodeHex(ivHex)
+//    val encryptedTextBytes = Hex.decodeHex(encryptedTextHex)
 
     return String(decryptedTextBytes, Charsets.UTF_8)
 }

@@ -1,31 +1,43 @@
 package auth
 
+import org.apache.commons.codec.binary.Hex
 import utils.*
 import java.io.File
 
 object Server {
-    fun signUpClient(clientAuthData: ClientAuthData) {
-        val username = clientAuthData.username
-        val salt = getSaltForUser(username)
-
-        val scryptToken = clientAuthData.pbKdf2Token.deriveWithScrypt(salt.toByteArray())
-
-        val file = File("src/main/resources/registry.txt").apply { createIfNotExists() }
+    fun signUpClient(clientAuthData: ClientAuthData) = with(clientAuthData) {
+        val file = File(resourcesFolder, "registry.txt").apply { createIfNotExists() }
         if (file.hasLine(username)) throw Exception("Username already registered")
 
-        file.putLine("$username=${scryptToken.encrypt()}")
+        val salt = getSaltForUser(username)
+        val scryptToken = pbKdf2Token.deriveWithScrypt(salt.toByteArray())
+        val scryptForKey = pbKdf2Token.deriveWithScrypt(salt.toByteArray(), keySize = 16) // AES KEY 128 bits
+        val scryptForIv = pbKdf2Token.deriveWithScrypt(salt.toByteArray(), keySize = 12) // GCM IV 96 bits
+
+        val secretKey = generateSecretKey(scryptForKey.toByteArray())
+        val iv = generateIv(scryptForIv.toByteArray())
+
+        println("key encrypt: ${Hex.encodeHexString(secretKey.encoded)}")
+        println("iv encrypt: ${Hex.encodeHexString(iv.iv)}")
+
+        file.putLine("$username=${scryptToken.encrypt(secretKey, iv)}")
     }
 
-    fun executeFirstClientAuth(clientAuthData: ClientAuthData): Boolean {
-        val username = clientAuthData.username
+    fun executeFirstClientAuth(clientAuthData: ClientAuthData): Boolean = with(clientAuthData) {
+        val file = File(resourcesFolder, "registry.txt").apply { createIfNotExists() }
+        val scryptTokenStored = file.getLine(username)?.split("=")?.get(1) ?: return false
+
         val salt = getSaltForUser(username)
+        val scryptToken = pbKdf2Token.deriveWithScrypt(salt.toByteArray())
+        val scryptForKey = pbKdf2Token.deriveWithScrypt(salt.toByteArray(), keySize = 16) // AES KEY 128 bits
+        val scryptForIv = pbKdf2Token.deriveWithScrypt(salt.toByteArray(), keySize = 12) // GCM IV 96 bits
 
-        val scryptToken = clientAuthData.pbKdf2Token.deriveWithScrypt(salt.toByteArray())
+        val secretKey = generateSecretKey(scryptForKey.toByteArray())
+        val iv = generateIv(scryptForIv.toByteArray())
 
-        val file = File("src/main/resources/registry.txt").apply { createIfNotExists() }
-        val scryptTokenStored = file.getLine(username)?.split("=")?.get(1)
-        val decryptedToken = scryptTokenStored?.decrypt()
+        println("key decrypt: ${Hex.encodeHexString(secretKey.encoded)}")
+        println("iv decrypt: ${Hex.encodeHexString(iv.iv)}")
 
-        return scryptToken == decryptedToken
+        scryptToken == scryptTokenStored.decrypt(secretKey, iv)
     }
 }

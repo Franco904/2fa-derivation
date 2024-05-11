@@ -11,15 +11,15 @@ import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
 fun getSaltForUser(username: String): String {
-    val file = File("src/main/resources/users-salt.txt").apply { createIfNotExists() }
+    val file = File(resourcesFolder, "users-salt.txt").apply { createIfNotExists() }
 
     val saltFromFile = file.getLine(username)?.split("=")?.get(1)
-    val saltHex = saltFromFile ?: generateSaltForUser(username).also { salt -> file.putLine("$username=$salt") }
+    val saltHex = saltFromFile ?: generateSalt().also { salt -> file.putLine("$username=$salt") }
 
     return saltHex
 }
 
-private fun generateSaltForUser(username: String): String {
+private fun generateSalt(): String {
     val sr = SecureRandom.getInstance("SHA1PRNG")
 
     val saltBytes = ByteArray(16)
@@ -43,7 +43,7 @@ fun String.deriveWithPbkdf2(salt: ByteArray): String {
 }
 
 // Scrypt
-fun String.deriveWithScrypt(salt: ByteArray): String {
+fun String.deriveWithScrypt(salt: ByteArray, keySize: Int = 32): String {
     val key = this.toCharArray()
 
     val params = Scrypt.ALGORITHM.using(
@@ -56,7 +56,7 @@ fun String.deriveWithScrypt(salt: ByteArray): String {
 
     val scryptKdf = KDFFactory().createKDFCalculator(params)
 
-    val derivedKeyBytes = ByteArray(32)
+    val derivedKeyBytes = ByteArray(keySize)
     scryptKdf.generateBytes(derivedKeyBytes)
 
     return Hex.toHexString(derivedKeyBytes)
