@@ -6,10 +6,6 @@ import org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider
 import java.security.Security
 import java.util.*
 
-
-/**
- * Roadmap: [link](https://docs.google.com/document/d/13e7_BFddyd-tu1rLySkT9ymcjwU2zJCA93OH2jPWwJM/edit)
- */
 fun main() {
     // Add BouncyCastle security provider so we can access its algorithms
     Security.addProvider(BouncyCastleFipsProvider())

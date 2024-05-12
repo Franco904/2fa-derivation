@@ -1,11 +1,9 @@
 package utils
 
 import org.apache.commons.codec.binary.Hex
-import java.security.SecureRandom
 import java.security.spec.AlgorithmParameterSpec
 import javax.crypto.AEADBadTagException
 import javax.crypto.Cipher
-import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.IvParameterSpec
