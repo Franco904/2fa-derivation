@@ -33,4 +33,6 @@ tasks.withType<Jar> {
             if (it.isDirectory) it else zipTree(it)
         }
     })
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
