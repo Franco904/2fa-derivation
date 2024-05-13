@@ -1,6 +1,5 @@
 package auth
 
-import com.google.zxing.common.BitMatrix
 import utils.*
 import java.io.File
 
