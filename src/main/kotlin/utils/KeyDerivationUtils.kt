@@ -1,6 +1,5 @@
 package utils
 
-import constants.*
 import org.bouncycastle.crypto.fips.Scrypt
 import org.bouncycastle.crypto.fips.Scrypt.KDFFactory
 import org.bouncycastle.util.Strings
@@ -9,6 +8,13 @@ import java.io.File
 import java.security.SecureRandom
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
+
+private const val PBKDF2_ITERATION_COUNT = 1000
+private const val PBKDF2_KEY_LENGTH = 128
+
+private const val SCRYPT_COST_PARAM = 2048
+private const val SCRYPT_BLOCKSIZE = 8
+private const val SCRYPT_PARALLELIZATION_PARAM = 1
 
 fun getSaltForUser(username: String): String {
     val file = File(resourcesFolder, "users-salt.txt").apply { createIfNotExists() }

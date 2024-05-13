@@ -20,6 +20,7 @@ object Server {
         val iv = generateIv(scryptForIv.toByteArray())
 
         file.putLine("${clientAuthData.username}=${scryptToken.encrypt(secretKey, iv)}")
+        println("Usuário registrado com sucesso. Timestamp: ${clientAuthData.timestamp}")
     }
 
     fun validateUsernamePassword(clientAuthData: ClientAuthData): String {
@@ -38,14 +39,15 @@ object Server {
 
         if (scryptToken != decryptedScryptToken) throw Exception("Usuário ou senha incorretos.")
 
+        println("Usuário autenticado com sucesso. Timestamp: ${clientAuthData.timestamp}")
         return decryptedScryptToken
     }
 
-    fun create2FACode(secret: String): Pair<String, BitMatrix?> {
+    fun create2FACode(secret: String): ServerTwoFAData {
         val totpToken = generateTotp(secret)
         val qrCodeMatrix = createQRCode(content = "https://large-type.com/#$totpToken")
 
-        return Pair(totpToken, qrCodeMatrix)
+        return ServerTwoFAData(totpToken, qrCodeMatrix)
     }
 
     fun validate2FACode(clientTOTP: String, originalTOTP: String) {

@@ -1,8 +1,7 @@
 package auth
 
-class ClientAuthData(
+data class ClientAuthData(
     val username: String,
-    val password: String,
     val pbKdf2Token: String,
     val timestamp: Long,
 )

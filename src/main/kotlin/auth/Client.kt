@@ -19,7 +19,6 @@ object Client {
 
         return ClientAuthData(
             username = username,
-            password = password,
             pbKdf2Token = pbkdf2Token,
             timestamp = System.currentTimeMillis(),
         )

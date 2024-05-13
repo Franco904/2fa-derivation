@@ -54,10 +54,10 @@ private fun runAuthMode() {
         return println(e.message)
     }
 
+    // TOTP auth (second factor)
     val (serverTOTP, qrCodeMatrix) = Server.create2FACode(secret = password)
     QrTerminal.print(qrCodeMatrix, false)
 
-    // TOTP auth (second factor)
     val clientTOTP = Client.input2FA()
 
     try {
@@ -81,9 +81,7 @@ private fun executeMessagingMode(clientAuthData: ClientAuthData) {
 
         Client.readServerResponse(serverResponse, clientAuthData)
 
-        val continueConversation = Client.continueConversation()
-
-        if (!continueConversation) {
+        if (!Client.continueConversation()) {
             // Exit
             break
         }
