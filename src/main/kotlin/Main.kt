@@ -1,7 +1,6 @@
 import auth.Client
 import auth.ClientAuthData
 import auth.Server
-import it.auties.qr.QrTerminal
 import org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider
 import java.security.Security
 import java.util.*
@@ -55,9 +54,7 @@ private fun runAuthMode() {
     }
 
     // TOTP auth (second factor)
-    val (serverTOTP, qrCodeMatrix) = Server.create2FACode(secret = password)
-    QrTerminal.print(qrCodeMatrix, false)
-
+    val serverTOTP = Server.create2FACode(secret = password)
     val clientTOTP = Client.input2FA()
 
     try {

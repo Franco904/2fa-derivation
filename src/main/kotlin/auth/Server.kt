@@ -1,7 +1,9 @@
 package auth
 
+import com.google.zxing.client.j2se.MatrixToImageWriter
 import utils.*
 import java.io.File
+import java.io.FileOutputStream
 
 object Server {
     private var sessionKey = ""
@@ -42,15 +44,23 @@ object Server {
         return decryptedScryptToken
     }
 
-    fun create2FACode(secret: String): ServerTwoFAData {
+    fun create2FACode(secret: String): String {
         val totpToken = generateTotp(secret)
         val qrCodeMatrix = createQRCode(content = "https://large-type.com/#$totpToken")
 
-        return ServerTwoFAData(totpToken, qrCodeMatrix)
+        // Create QR Code with TOTP token
+        val file = File(resourcesFolder, "qr_code.png")
+        FileOutputStream(file).use { stream ->
+            MatrixToImageWriter.writeToStream(qrCodeMatrix, "png", stream)
+        }
+
+        return totpToken
     }
 
     fun validate2FACode(clientTOTP: String, originalTOTP: String) {
         if (clientTOTP != originalTOTP) throw Exception("Código 2FA incorreto.")
+
+        println("Usuário autenticado com sucesso.")
     }
 
     fun derivateTOTPtoSessionKey(totp: String, clientAuthData: ClientAuthData) {
