@@ -1,8 +1,13 @@
 plugins {
     kotlin("jvm") version "1.9.23"
+    id("application")
 }
 
 version = "1.0"
+
+application {
+    mainClass = "MainKt"
+}
 
 repositories {
     mavenCentral()
@@ -22,16 +27,6 @@ dependencies {
     implementation("com.google.zxing:javase:3.5.3")
 }
 
-tasks.withType<Jar> {
-    manifest {
-        attributes("Main-Class" to "MainKt")
-    }
-
-    from(configurations.compileClasspath.map { config ->
-        config.map {
-            if (it.isDirectory) it else zipTree(it)
-        }
-    })
-
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+tasks.named<JavaExec>("run") {
+    standardInput = System.`in`
 }
